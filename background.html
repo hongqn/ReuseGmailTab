@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+	<script>
+		var onNewTabUrl = function(pattern, callback) {
+			chrome.tabs.onCreated.addListener(function(newTab) {
+				console.log("new tab: " + newTab.url);
+				var newUrl = newTab.url;
+				if (newUrl) {
+					if (pattern.test(newUrl)) {
+						callback(newTab, newUrl);
+					}
+				} else {
+					var getUrl = function(tabId, changeInfo, tab) {
+						if (tabId == newTab.id) {
+							console.log("tab updated: " + changeInfo.url);
+							if (changeInfo.url) {
+								chrome.tabs.onUpdated.removeListener(getUrl);
+								if (pattern.test(changeInfo.url)) {
+									callback(newTab, changeInfo.url);
+								}
+							}
+						}
+					};
+					chrome.tabs.onUpdated.addListener(getUrl);
+				}
+			});
+		};
+
+		var gmailSigleMailPattern = /https:\/\/mail\.google\.com\/mail\/.*#[a-z]+\//;
+		var gmailUrlPattern = /https:\/\/mail\.google\.com/;
+		onNewTabUrl(gmailSigleMailPattern, function(newTab, newUrl) {
+			chrome.tabs.getAllInWindow(null, function(tabs) {
+				for (var i=0; i<tabs.length; i++) {
+					var tab = tabs[i];
+					if (tab.id == newTab.id) {
+						continue;
+					}
+					console.log("existing tab: " + tab.url);
+					if (gmailUrlPattern.test(tab.url)) {
+						chrome.tabs.executeScript(tab.id, {
+							code: 'location.href = "' + newUrl + '";',
+						});
+						chrome.tabs.update(tab.id, {
+							selected: true,
+						});
+						chrome.tabs.remove(newTab.id);
+						break;
+					}
+				};
+			});
+		});
+	</script>
+</html>

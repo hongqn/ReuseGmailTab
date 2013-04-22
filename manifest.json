@@ -1,0 +1,10 @@
+{
+  "name": "Reuse Gmail Tab",
+  "version": "1.0",
+  "description": "Use existing Gmail tab to open the gmail link, to prevent boring loading time",
+  "permissions": [
+    "tabs",
+    "https://mail.google.com/"
+  ],
+  "background_page": "background.html"
+}
